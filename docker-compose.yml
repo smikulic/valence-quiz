@@ -1,0 +1,48 @@
+version: "3"
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres_db_valence_quiz
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresDB:/data/postgres
+    env_file:
+      - ./server/.env
+
+  server:
+    stdin_open: true
+    container_name: server
+    build:
+      context: .
+      dockerfile: server.Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    restart: always
+
+  client:
+    stdin_open: true
+    container_name: client
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"
+    # For webpack dev server to use our local files
+    volumes:
+      - ./client:/client
+    environment:
+      - WDS_SOCKET_HOST=127.0.0.1
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+
+volumes:
+  postgresDB:
